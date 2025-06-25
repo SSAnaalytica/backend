@@ -9,3 +9,4 @@ python-jose
 aiofiles
 python-dotenv
 aiosmtplib
+fpdf
