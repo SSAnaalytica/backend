@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Iniciar sesión</title>
+    <meta charset="utf-8">
+    <link rel="icon" href="/assets/logo_santa_sofia.png">
+    <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+    <div class="login-box">
+    <img src="/assets/logo_santa_sofia.png" alt="Logo">
+    <h2>Iniciar sesión</h2>
+
+  {% if request.query_params.get("exp") %}
+<div style="background:#ffe0e0; color:#990000; padding:10px; margin-bottom:15px; border-radius:5px; text-align:center;">
+    ⚠ Tu sesión ha expirado. Vuelve a iniciar sesión.
+</div>
+{% endif %}
+
+    <form action="/token" method="post">
+        <input type="text" name="username" placeholder="Usuario" required>
+        <input type="password" name="password" placeholder="Contraseña" required>
+        <input type="submit" value="Ingresar">
+    </form>
+    <div class="register-link">
+        ¿No tienes cuenta? <a href="/register">Regístrate aquí</a>
+    </div>
+</div>
+</body>
+</html>

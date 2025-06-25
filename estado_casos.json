@@ -1,0 +1,10 @@
+{
+    "CE24-13094": {
+        "assigned": "Ricardo Garcia",
+        "status": "Abierto"
+    },
+    "QE24-15755-1.ome": {
+        "último_reporte": "reportes/QE24-15755-1.ome_Ricardo Garcia.json",
+        "status": "Cerrado"
+    }
+}

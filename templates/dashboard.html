@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - Lista de trabajo</title>
+    <meta charset="utf-8">
+    <link rel="icon" href="/assets/logo_santa_sofia.png">
+    <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <img src="/assets/logo_santa_sofia.png" alt="Logo">
+            <strong>Visor de laminillas ▸ Lista de trabajo</strong>
+        </div>
+        <div>
+            <span>{{usuario}}</span>
+        </div>
+        <a href="/logout">
+    <button style="background-color: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">
+        Cerrar sesión
+    </button>
+</a>
+    </header>
+    <div class="container">
+        <h2>Casos disponibles</h2>
+        <input type="text" id="search" placeholder="Buscar por nombre de caso..." onkeyup="filtrarTabla()">
+        <table id="casos">
+            <thead>
+                <tr><th>Número de caso</th><th>Tipo</th><th>Asignado</th><th>Paciente</th><th>Creado</th><th>Estatus</th><th>Acción</th></tr>
+            </thead>
+            <tbody>
+                {{rows | safe}}
+            </tbody>
+        </table>
+    </div>
+    <script>
+        function filtrarTabla() {
+            let input = document.getElementById('search').value.toLowerCase();
+            let tr = document.getElementsByTagName('tr');
+            for (let i = 1; i < tr.length; i++) {
+                let td = tr[i].getElementsByTagName('td')[0];
+                tr[i].style.display = td && td.innerText.toLowerCase().includes(input) ? '' : 'none';
+            }
+        }
+
+        function asignarCaso(caseId, button) {
+            fetch("/assign", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ case_id: caseId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "ok") {
+                    const row = button.closest("tr");
+                    if (row) row.children[2].textContent = data.assigned_to;
+                    const cell = button.closest("td");
+                    if (cell) cell.innerHTML = `<span style="color:green;">Asignado</span>`;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

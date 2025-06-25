@@ -1,0 +1,141 @@
+/* ========== ESTRUCTURA GENERAL ========== */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f0f4f8;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: #3d85c6;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+}
+
+header img {
+    height: 40px;
+}
+
+/* ========== FORMULARIOS ========== */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button,
+input[type="submit"] {
+    background-color: #3d85c6;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover,
+input[type="submit"]:hover {
+    background-color: #2e679a;
+}
+
+/* ========== TABLAS ========== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #3d85c6;
+    color: white;
+}
+
+tr:hover {
+    background-color: #eef2f7;
+}
+
+/* ========== CONTENEDORES DE PÁGINAS ========== */
+.container {
+    padding: 30px;
+    max-width: 1000px;
+    margin: auto;
+}
+
+/* ========== VISTA DEL VISOR ========== */
+#openseadragon1 {
+    flex: 1;
+    height: 100%;
+    background-color: black;
+}
+.main-content {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 60px); /* asumiendo que el header mide 60px */
+}
+
+
+
+/* ========== PANEL DERECHO EN EL VISOR ========== */
+.right-panel {
+    width: 300px;
+    background: #f9f9f9;
+    padding: 20px;
+    border-left: 1px solid #ddd;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+    overflow-y: auto;
+}
+/* ========== PANEL Izquierdo EN EL VISOR ========== */
+.left-panel {
+  width: 220px;
+  padding: 10px;
+  background: #f4f4f4;
+  border-right: 1px solid #ccc;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* ========== TEXTO PEQUEÑO / MENSAJES ========== */
+#mensaje {
+    font-size: 13px;
+    color: green;
+    margin-top: 10px;
+    text-align: center;
+}
+#columna-toggle {
+    width: 30px;
+    background: #3d85c6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.toggle-button {
+   
+    border: none;
+    background: transparent;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+}

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registro</title>
+    <meta charset="utf-8">
+    <link rel="icon" href="/assets/logo_santa_sofia.png">
+    <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+    <div class="register-box">
+        <img src="/assets/logo_santa_sofia.png" alt="Logo">
+        <h2>Registro de nuevo usuario</h2>
+        <form action="/register" method="post">
+            <input type="text" name="username" placeholder="Usuario" required>
+            <input type="text" name="full_name" placeholder="Nombre completo" required>
+            <input type="email" name="email" placeholder="Correo electrónico" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+            <input type="submit" value="Registrarse">
+        </form>
+        <div class="login-link">
+            <a href="/login">← Volver al login</a>
+        </div>
+    </div>
+</body>
+</html>

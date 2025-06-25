@@ -1,0 +1,9 @@
+{
+    "Ricardo": {
+        "username": "Ricardo",
+        "full_name": "Ricardo Garcia",
+        "email": "soporte@medssofia.com",
+        "hashed_password": "$2b$12$m1EI//NIxLP8PrZE7eSndOQLmQc6iZR4AZz/4lWt8.BsAKwXhxVwC",
+        "disabled": false  
+        }
+}
