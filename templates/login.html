@@ -5,25 +5,67 @@
     <meta charset="utf-8">
     <link rel="icon" href="/assets/logo_santa_sofia.png">
     <link rel="stylesheet" href="/assets/style.css">
+    <style>
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f4f8;
+        }
+
+        .auth-box {
+            background: white;
+            padding: 40px 60px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .auth-box img {
+            height: 60px;
+            margin-bottom: 20px;
+        }
+
+        .auth-box form input {
+            width: 100%;
+        }
+
+        .auth-box .register-link {
+            margin-top: 15px;
+        }
+
+        .alert-expired {
+            background:#ffe0e0;
+            color:#990000;
+            padding:10px;
+            margin-bottom:15px;
+            border-radius:5px;
+            text-align:center;
+        }
+    </style>
 </head>
 <body>
-    <div class="login-box">
-    <img src="/assets/logo_santa_sofia.png" alt="Logo">
-    <h2>Iniciar sesión</h2>
+<div class="auth-container">
+    <div class="auth-box">
+        <img src="/assets/logo_santa_sofia.png" alt="Logo">
+        <h2>Iniciar sesión</h2>
 
-  {% if request.query_params.get("exp") %}
-<div style="background:#ffe0e0; color:#990000; padding:10px; margin-bottom:15px; border-radius:5px; text-align:center;">
-    ⚠ Tu sesión ha expirado. Vuelve a iniciar sesión.
-</div>
-{% endif %}
+        {% if request.query_params.get("exp") %}
+        <div class="alert-expired">⚠ Tu sesión ha expirado. Vuelve a iniciar sesión.</div>
+        {% endif %}
 
-    <form action="/token" method="post">
-        <input type="text" name="username" placeholder="Usuario" required>
-        <input type="password" name="password" placeholder="Contraseña" required>
-        <input type="submit" value="Ingresar">
-    </form>
-    <div class="register-link">
-        ¿No tienes cuenta? <a href="/register">Regístrate aquí</a>
+        <form action="/token" method="post">
+            <input type="text" name="username" placeholder="Usuario" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+            <input type="submit" value="Ingresar">
+        </form>
+
+        <div class="register-link">
+            ¿No tienes cuenta? <a href="/register">Regístrate aquí</a>
+        </div>
     </div>
 </div>
 </body>

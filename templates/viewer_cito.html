@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Visor Citología - {{slide}}</title>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/assets/logo_santa_sofia.png">
+    <link rel="stylesheet" href="/assets/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.0.0/openseadragon.min.js"></script>
+</head>
+<body>
+
+<header class="viewer-bar">
+    <div class="left">
+        <img src="/assets/logo_santa_sofia.png" alt="Logo">
+        <strong>Citología ▸ {{slide}}</strong>
+    </div>
+    <div class="right">
+        <span>{{usuario}}</span>
+        <a href="/dashboard/citologia" class="btn-volver">← Volver</a>
+    </div>
+</header>
+
+<div class="main-content">
+    <!-- PANEL IZQUIERDO -->
+    <div class="left-panel">
+        <h3>Conteo por clase</h3>
+        <table><tbody id="tabla-clases"></tbody></table>
+        <h4>Leyenda:</h4>
+        <div class="legend" id="leyenda"></div>
+
+        <div id="control-tamano" style="margin-top: 20px;">
+            <label for="tamano-tiles">Tamaño de tiles:</label>
+            <input type="range" id="tamano-tiles" min="64" max="256" step="64" value="128" oninput="actualizarTamanoTiles(this.value)">
+            <div id="slider-valor" style="font-size: 13px; margin-top: 5px;">Mediano</div>
+        </div>
+    </div>
+
+    <!-- VISOR DZI -->
+    <div id="openseadragon1" style="height: 100%; flex-grow: 1; position: relative; z-index: 1;"></div>
+
+    <!-- BOTÓN COLAPSAR PANEL DERECHO -->
+    <div>
+        <button class="toggle-button" onclick="togglePanel()">❰</button>
+    </div>
+
+    <!-- PANEL DERECHO -->
+    <div class="right-panel" id="panel-derecho">
+        <h3>Datos del paciente</h3>
+        <input type="text" id="nombre" placeholder="Nombre completo">
+        <input type="number" id="edad" placeholder="Edad">
+        <h4>Diagnóstico</h4>
+        <textarea id="diagnostico" rows="4" placeholder="Escribe el diagnóstico..."></textarea>
+        <h4>Comentarios</h4>
+        <textarea id="comentarios" rows="4" placeholder="Notas adicionales..."></textarea>
+        <button onclick="guardar()">💾 Guardar reporte</button>
+        <button onclick="finalizar()">✅ Finalizar caso</button>
+        <button onclick="window.location.href='/descargar_pdf?slide={{slide}}'">📄 Descargar PDF</button>
+        <p id="mensaje" style="color:green; font-size:13px;"></p>
+    </div>
+</div>
+
+<!-- GALERÍA INFERIOR -->
+<div id="galeria-contenedor" class="galeria-inferior">
+    <div class="galeria-header">
+        <h4 style="margin: 0;">Galería clasificada</h4>
+        <button onclick="toggleGaleria()" class="btn-colapsar">▼</button>
+    </div>
+    <div class="galeria-contenido">
+        <div style="margin-bottom: 10px;">
+            <select id="clase-selector" onchange="mostrarGaleria(this.value)"></select>
+        </div>
+        <div id="galeria" style="display: flex; flex-wrap: wrap;"></div>
+        <div id="paginacion" style="margin-top: 10px;"></div>
+    </div>
+</div>
+
+<script>
+const CONF_THRESHOLD = 0.9;
+const TILE_SIZE = 256;
+const SOURCE_LEVEL = 17;
+const CLASS_COLORS = {
+    "Normal": "#27ae60",
+    "ASCUS": "#f39c12",
+    "LSIL": "#e67e22",
+    "HSIL": "#c0392b",
+    "Carcinoma": "#8e44ad",
+    "Artefacto": "#7f8c8d",
+    "Desconocida": "#000000"
+};
+
+const viewer = OpenSeadragon({
+    id: "openseadragon1",
+    prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.0.0/images/",
+    tileSources: `/static/{{slide}}.dzi`
+});
+
+let overlaysActivos = [];
+
+function limpiarOverlays() {
+    overlaysActivos.forEach(el => viewer.removeOverlay(el));
+    overlaysActivos = [];
+}
+
+function mostrarOverlays(clase, datos) {
+    limpiarOverlays();
+    const color = CLASS_COLORS[clase] || "#000";
+    const scale = Math.pow(2, viewer.source.maxLevel - SOURCE_LEVEL);
+
+    datos.forEach(obj => {
+        if (obj.confidence >= CONF_THRESHOLD) {
+            const el = document.createElement("div");
+            el.className = "tile-overlay";
+            el.style.borderColor = color;
+            el.style.width = `${TILE_SIZE}px`;
+            el.style.height = `${TILE_SIZE}px`;
+
+            const x = obj.x * scale;
+            const y = obj.y * scale;
+            const rect = viewer.viewport.imageToViewportRectangle(x, y, TILE_SIZE, TILE_SIZE);
+            viewer.addOverlay({ element: el, location: rect });
+            overlaysActivos.push(el);
+        }
+    });
+}
+
+// PANEL DERECHO
+function togglePanel() {
+    const panel = document.getElementById("panel-derecho");
+    const button = document.querySelector(".toggle-button");
+    panel.classList.toggle("collapsed");
+    button.innerText = panel.classList.contains("collapsed") ? "❰" : "❱";
+}
+
+// GALERÍA INFERIOR
+let galeriaVisible = true;
+function toggleGaleria() {
+    galeriaVisible = !galeriaVisible;
+    const galeria = document.getElementById("galeria-contenedor");
+    const boton = document.querySelector(".btn-colapsar");
+    galeria.classList.toggle("colapsada", !galeriaVisible);
+    boton.textContent = galeriaVisible ? "▼" : "▲";
+}
+
+function actualizarTamanoTiles(valor) {
+    const label = document.getElementById("slider-valor");
+    label.textContent = valor == 64 ? "Pequeño" : valor == 128 ? "Mediano" : "Grande";
+    cargarPagina();
+}
+
+// Cargar datos JSON por clase
+fetch(`/static/{{slide}}_predicciones.json`)
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.getElementById("tabla-clases");
+        const leyenda = document.getElementById("leyenda");
+        const selector = document.getElementById("clase-selector");
+
+        Object.entries(data).forEach(([clase, lista]) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td><a href="#" onclick='mostrarOverlays("${clase}", ${JSON.stringify(lista)})'>${clase}</a></td><td>${lista.length}</td>`;
+            tbody.appendChild(row);
+
+            const color = CLASS_COLORS[clase] || "#000";
+            leyenda.innerHTML += `<div><span style="background:${color};"></span> ${clase}</div>`;
+
+            const option = document.createElement("option");
+            option.value = clase;
+            option.textContent = clase;
+            selector.appendChild(option);
+        });
+    });
+
+// Cargar reporte
+fetch("/leer_reporte?slide={{slide}}")
+    .then(res => res.json())
+    .then(data => {
+        if (data.paciente) document.getElementById("nombre").value = data.paciente;
+        if (data.edad) document.getElementById("edad").value = data.edad;
+        if (data.diagnostico) document.getElementById("diagnostico").value = data.diagnostico;
+        if (data.comentarios) document.getElementById("comentarios").value = data.comentarios;
+    });
+
+function guardar() {
+    const data = {
+        caso: "{{slide}}",
+        usuario: "{{usuario}}",
+        paciente: document.getElementById("nombre").value,
+        edad: document.getElementById("edad").value,
+        diagnostico: document.getElementById("diagnostico").value,
+        comentarios: document.getElementById("comentarios").value,
+        timestamp: new Date().toISOString()
+    };
+    fetch("/guardar_reporte", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    }).then(res => res.json()).then(res => {
+        document.getElementById("mensaje").innerText = "✔ Reporte guardado como " + res.archivo;
+    });
+}
+
+function finalizar() {
+    fetch("/finalizar_caso", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caso: "{{slide}}" })
+    }).then(res => res.json()).then(data => {
+        if (data.status === "ok") alert("Caso marcado como cerrado.");
+    });
+}
+
+// Galería paginada
+let paginaActual = 0;
+const LIMITE = 20;
+let claseSeleccionada = "";
+
+function mostrarGaleria(clase) {
+    claseSeleccionada = clase;
+    paginaActual = 0;
+    cargarPagina();
+}
+
+function cargarPagina() {
+    const slide = "{{slide}}";
+    const offset = paginaActual * LIMITE;
+    const size = document.getElementById("tamano-tiles").value;
+
+    fetch(`/listar_tiles?slide=${slide}&clase=${claseSeleccionada}&offset=${offset}&limit=${LIMITE}`)
+        .then(res => res.json())
+        .then(data => {
+            const contenedor = document.getElementById("galeria");
+            contenedor.style.display = "flex";
+            contenedor.innerHTML = "";
+
+            data.imagenes.forEach(url => {
+                const img = document.createElement("img");
+                img.src = url;
+                img.style.width = `${size}px`;
+                img.style.margin = "5px";
+                contenedor.appendChild(img);
+            });
+
+            document.getElementById("paginacion").innerHTML = `
+                <button onclick="paginaAnterior()">⬅</button>
+                <button onclick="paginaSiguiente()">➡</button>
+            `;
+        });
+}
+function paginaSiguiente() {
+    paginaActual++;
+    cargarPagina();
+}
+function paginaAnterior() {
+    if (paginaActual > 0) {
+        paginaActual--;
+        cargarPagina();
+    }
+}
+</script>
+
+</body>
+</html>

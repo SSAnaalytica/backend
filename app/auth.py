@@ -4,11 +4,13 @@ from jose import JWTError, jwt
 from app.models import UserInDB, User
 from app.utils import *
 from app.config import *
+from app.exceptions import TokenExpired  
 import os
 from fastapi.templating import Jinja2Templates
 auth_router = APIRouter()
 fake_users_db = load_json(USUARIOS_PATH)
 templates = Jinja2Templates(directory="templates")
+
 def get_user(username: str):
     if username in fake_users_db:
         return UserInDB(**fake_users_db[username])
@@ -25,22 +27,25 @@ async def login(username: str = Form(...), password: str = Form(...)):
     if not user:
         raise HTTPException(status_code=400, detail="Usuario o contraseña incorrecta o sin confirmar")
     access_token = create_access_token(data={"sub": user.username})
-    response = RedirectResponse(url="/dashboard", status_code=302)
+    response = RedirectResponse(url="/selector_tipo", status_code=302)
     response.set_cookie(key="token", value=access_token, httponly=True)
     return response
 
 async def get_current_user(request: Request):
     token = request.cookies.get("token")
     if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise TokenExpired()
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
         if username is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return get_user(username)
+            raise TokenExpired()
+        user = get_user(username)
+        if user is None:
+            raise TokenExpired()
+        return user
     except JWTError:
-        return RedirectResponse(url="/login?exp=1")
+        raise TokenExpired()
     
 @auth_router.get("/login", response_class=HTMLResponse)
 async def serve_login(request: Request):

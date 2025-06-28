@@ -1,10 +1,32 @@
 {
     "CE24-13094": {
         "assigned": "Ricardo Garcia",
-        "status": "Abierto"
+        "status": "Abierto",
+        "TIPO": "Citología cervical"
     },
     "QE24-15755-1.ome": {
         "último_reporte": "reportes/QE24-15755-1.ome_Ricardo Garcia.json",
-        "status": "Cerrado"
+        "status": "Cerrado",
+        "TIPO": "Histología"
+    },
+    "QE24-15755-2.ome": {
+        "TIPO": "Histología"
+    },
+    "QE24-15755.ome": {
+        "TIPO": "Histología"
+    },
+    "QE24-15755_0": {
+        "TIPO": "Histología",
+        "assigned": "Ricardo Garcia",
+        "status": "Abierto"
+    },
+    "QE24-15755_1": {
+        "TIPO": "Histología"
+    },
+    "QE24-15755_2": {
+        "TIPO": "Histología"
+    },
+    "QE24-15755": {
+        "TIPO": "Histología"
     }
 }

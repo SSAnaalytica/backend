@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Visor Histología - {{slide}}</title>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/assets/logo_santa_sofia.png">
+    <link rel="stylesheet" href="/assets/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.0.0/openseadragon.min.js"></script>
+    
+</head>
+<body>
+
+<header class="viewer-bar">
+    <div class="left">
+        <img src="/assets/logo_santa_sofia.png" alt="Logo">
+        <strong>Histología ▸ {{slide}}</strong>
+    </div>
+    <div class="right">
+        <span>{{usuario}}</span>
+        <a href="/dashboard/histologia" class="btn-volver">← 🏠 Inicio</a>
+    </div>
+</header>
+
+<div class="main-content">
+
+    <div id="charola" class="charola-slide-bar">
+        {% for s in slides %}
+        <div onclick="cargarSlide('{{s.nombre}}')" class="miniatura-slide">
+            <img src="{{s.miniatura}}" class="img-miniatura">
+            <div class="nombre-miniatura">{{s.nombre}}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="openseadragon1" style="height: 100%; flex-grow: 1;"></div>
+<div class="right-panel" id="panel-derecho">
+    <h3>Datos del paciente</h3>
+    <input type="text" id="nombre" placeholder="Nombre completo">
+    <input type="number" id="edad" placeholder="Edad">
+    <h4>Diagnóstico</h4>
+    <textarea id="diagnostico" rows="4" placeholder="Escribe el diagnóstico..."></textarea>
+    <h4>Comentarios</h4>
+    <textarea id="comentarios" rows="4" placeholder="Notas adicionales..."></textarea>
+    <button onclick="guardar()">💾 Guardar reporte</button>
+    <button onclick="finalizar()">✅ Finalizar caso</button>
+    <button onclick="window.location.href='/descargar_pdf?slide={{slide}}'">📄 Descargar PDF</button>
+    <p id="mensaje" style="color:green; font-size:13px;"></p>
+</div>
+</div>
+
+<script>
+const viewer = OpenSeadragon({
+    id: "openseadragon1",
+    prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.0.0/images/",
+    tileSources: `/static/{{slide}}.dzi`
+});
+
+function cargarSlide(nombre) {
+    window.location.href = `/viewer/histologia?slide=${nombre}`;
+}
+// Cargar reporte existente
+fetch("/leer_reporte?slide={{slide}}")
+    .then(res => res.json())
+    .then(data => {
+        if (data.paciente) document.getElementById("nombre").value = data.paciente;
+        if (data.edad) document.getElementById("edad").value = data.edad;
+        if (data.diagnostico) document.getElementById("diagnostico").value = data.diagnostico;
+        if (data.comentarios) document.getElementById("comentarios").value = data.comentarios;
+    });
+
+function guardar() {
+    const data = {
+        caso: "{{slide}}",
+        usuario: "{{usuario}}",
+        paciente: document.getElementById("nombre").value,
+        edad: document.getElementById("edad").value,
+        diagnostico: document.getElementById("diagnostico").value,
+        comentarios: document.getElementById("comentarios").value,
+        timestamp: new Date().toISOString()
+    };
+    fetch("/guardar_reporte", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    }).then(res => res.json()).then(res => {
+        document.getElementById("mensaje").innerText = "✔ Reporte guardado como " + res.archivo;
+    });
+}
+
+function finalizar() {
+    fetch("/finalizar_caso", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caso: "{{slide}}" })
+    }).then(res => res.json()).then(data => {
+        if (data.status === "ok") alert("Caso marcado como cerrado.");
+    });
+}
+</script>
+
+</body>
+</html>

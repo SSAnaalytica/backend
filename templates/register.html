@@ -5,11 +5,45 @@
     <meta charset="utf-8">
     <link rel="icon" href="/assets/logo_santa_sofia.png">
     <link rel="stylesheet" href="/assets/style.css">
+    <style>
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f4f8;
+        }
+
+        .auth-box {
+            background: white;
+            padding: 40px 60px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        .auth-box img {
+            height: 60px;
+            margin-bottom: 20px;
+        }
+
+        .auth-box form input {
+            width: 100%;
+        }
+
+        .auth-box .login-link {
+            margin-top: 15px;
+        }
+    </style>
 </head>
 <body>
-    <div class="register-box">
+<div class="auth-container">
+    <div class="auth-box">
         <img src="/assets/logo_santa_sofia.png" alt="Logo">
         <h2>Registro de nuevo usuario</h2>
+
         <form action="/register" method="post">
             <input type="text" name="username" placeholder="Usuario" required>
             <input type="text" name="full_name" placeholder="Nombre completo" required>
@@ -17,9 +51,11 @@
             <input type="password" name="password" placeholder="Contraseña" required>
             <input type="submit" value="Registrarse">
         </form>
+
         <div class="login-link">
             <a href="/login">← Volver al login</a>
         </div>
     </div>
+</div>
 </body>
 </html>

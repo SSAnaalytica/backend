@@ -1,12 +1,18 @@
-from fastapi import FastAPI, APIRouter, UploadFile, File
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-
+from fastapi.responses import RedirectResponse
 from app import auth
 from app.routes import router as main_router
-
+from app.exceptions import TokenExpired
 app = FastAPI()
-app.include_router(upload_router)
+@app.get("/")
+def redirigir_a_login():
+    return RedirectResponse(url="/login")
+@app.exception_handler(TokenExpired)
+async def token_expired_handler(request: Request, exc: TokenExpired):
+    return RedirectResponse(url="/login?exp=1")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
