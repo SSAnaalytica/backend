@@ -10,6 +10,7 @@ from app.auth import get_current_user
 from app.models import User
 from app.utils import guardar_estado, estado_casos
 from app.exceptions import TokenExpired
+from app.models import UserInDB
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -45,57 +46,73 @@ async def dashboard_citologia(request: Request, user: User = Depends(get_current
 async def dashboard_histologia(request: Request, user: User = Depends(get_current_user)):
     return render_dashboard_por_tipo("Histología", request, user)
 
+@router.get("/viewer/{slide}", response_class=HTMLResponse)
+async def render_viewer(slide: str, request: Request, usuario: UserInDB = Depends(get_current_user)):
+    url_base = "https://wsi-upload-ssa.s3.us-east-2.amazonaws.com/"
+    tipo = obtener_tipo(slide)
+    return templates.TemplateResponse("viewer_cito.html", {
+    "request": request,
+    "slide": slide,
+    "usuario": usuario.full_name,
+    "tipo": tipo,
+    "url_base": url_base
+})
 
 def render_dashboard_por_tipo(tipo_deseado, request, user):
-    files = os.listdir("static")
-    dzi_files = [f for f in files if f.endswith(".dzi")]
+    path = "estado_casos.json"
     rows = ""
-    cambios = False
+    url_base = "https://wsi-upload-ssa.s3.us-east-2.amazonaws.com/"
 
-    # Agrupar slides por base (antes del "_")
-    casos_dict = defaultdict(list)
-    for f in dzi_files:
-        nombre = f[:-4]  # sin .dzi
-        base_id = nombre.split("_")[0]
-        casos_dict[base_id].append(nombre)
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            try:
+                data = json.load(f)
+                for slide_id, info in data.items():
+                    if info.get("TIPO") == tipo_deseado:
+                        asignado = info.get("ASIGNADO", "—")
+                        paciente = info.get("PACIENTE", "—")
+                        fecha = info.get("FECHA", "—")
+                        estado = info.get("ESTADO", "Abierto")
+                        tipo = info.get("TIPO", "¿?")
 
-    for base_id, variantes in casos_dict.items():
-        # Usamos la primera variante como representativa para cargar el viewer
-        nombre = variantes[0]
-        path = os.path.join("static", nombre + ".dzi")
-        if not os.path.exists(path):
-            continue
+                        # 🔁 CORREGIR RUTA SEGÚN TIPO   
+                        if tipo == "Citología cervical":
+                            ruta = f"/viewer/slide={slide_id}"
+                        elif tipo == "Histología":
+                            ruta = f"/viewer/slide={slide_id}"
+                        else:
+                            ruta = "#"
 
-        tipo = "Citología cervical" if base_id.startswith("CE") else "Histología" if base_id.startswith("QE") else "Desconocido"
-        if tipo != tipo_deseado:
-            continue
+                        accion = (
+                            f'<a href="{ruta}"><button>Ver visor</button></a>'
+                            if asignado == user.full_name or asignado == "—"
+                            else '<span style="color:gray;">No disponible</span>'
+                        )
 
-        estado = estado_casos.setdefault(base_id, {})
-        if "TIPO" not in estado:
-            estado["TIPO"] = tipo
-            cambios = True
+                        if asignado == "—" and estado == "Abierto":
+                            accion = f'<button onclick="asignarCaso(\'{slide_id}\', this)">Asignar</button>'
 
-        fecha_mod = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d")
-        assigned = estado.get("assigned", "-")
-        status = estado.get("status", "Abierto")
-        reporte = estado.get("último_reporte")
-
-        acciones = f"<button onclick=\"event.stopPropagation(); asignarCaso('{base_id}', this)\">Asignar caso</button>"
-        if reporte:
-            acciones += f"<br><a href='/{reporte}' target='_blank'>Ver reporte</a>"
-
-        ruta_viewer = "/viewer/citologia" if tipo_deseado == "Citología cervical" else "/viewer/histologia"
-        rows += f"<tr onclick=\"window.location='{ruta_viewer}?slide={nombre}'\" style='cursor:pointer;'>"
-        rows += f"<td>{base_id}</td><td>{tipo}</td><td>{assigned}</td><td>-</td><td>{fecha_mod}</td><td>{status}</td><td>{acciones}</td></tr>"
-
-    if cambios:
-        guardar_estado()
+                        rows += f"""
+<tr class='clickable-row' data-slide='{slide_id}' data-tipo='{tipo}'>
+    <td>{slide_id}</td>
+    <td>{tipo}</td>
+    <td>{asignado}</td>
+    <td>{paciente}</td>
+    <td>{fecha}</td>
+    <td>{estado}</td>
+    <td>Click para abrir</td>
+</tr>
+                        """
+            except json.JSONDecodeError:
+                print("Error: JSON inválido")
 
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
-        "user": user,
-        "rows": rows
+        "usuario": user.full_name,
+        "rows": rows,
+        "url_base": url_base
     })
+
     # ──────────────────────────────────────────────
     # BLOQUE 2: VIEWER + REPORTE
     # ──────────────────────────────────────────────
@@ -112,11 +129,14 @@ async def viewer_citologia(slide: str, request: Request):
     if tipo != "Citología cervical":
         raise HTTPException(status_code=400, detail="Este visor es solo para citología")
     
+    url_base = "https://wsi-upload-ssa.s3.us-east-2.amazonaws.com/"
+
     return templates.TemplateResponse("viewer_cito.html", {
         "request": request,
         "slide": slide,
         "usuario": user.full_name,
-        "tipo": tipo
+        "tipo": tipo,
+        "url_base": url_base  # ✅ IMPORTANTE
     })
 
 
@@ -124,17 +144,18 @@ async def viewer_citologia(slide: str, request: Request):
 async def viewer_histologia(slide: str, request: Request):
     user = await get_current_user(request)
     tipo = obtener_tipo(slide)
-    if tipo != "Histología":
+    if tipo != "Histología":  # Asegúrate que coincida exactamente con lo que devuelve `obtener_tipo`
         raise HTTPException(status_code=400, detail="Este visor es solo para histología")
+    
+    url_base = "https://wsi-upload-ssa.s3.us-east-2.amazonaws.com/"
 
-    slides_info = []
-    relacionados = encontrar_slides_asociados(slide)
-    for nombre in relacionados:
-        miniatura = f"/static/{nombre}_files/8/0_0.jpg"
-        slides_info.append({
-            "nombre": nombre,
-            "miniatura": miniatura
-        })
+    return templates.TemplateResponse("viewer_histo.html", {
+        "request": request,
+        "slide": slide,
+        "usuario": user.full_name,
+        "tipo": tipo,
+        "url_base": url_base
+    })
 
     return templates.TemplateResponse("viewer_histo.html", {
         "request": request,
