@@ -148,7 +148,7 @@ function actualizarTamanoTiles(valor) {
 }
 
 // Cargar datos JSON por clase
-fetch(`/static/{{slide}}_predicciones.json`)
+fetch(`https://wsi-upload-ssa.s3.us-east-2.amazonaws.com/{{ slide }}_predicciones.json`)
     .then(res => res.json())
     .then(data => {
         const tbody = document.getElementById("tabla-clases");
