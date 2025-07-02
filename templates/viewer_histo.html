@@ -52,7 +52,7 @@
 const viewer = OpenSeadragon({
     id: "openseadragon1",
     prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.0.0/images/",
-    tileSources: `/static/{{slide}}.dzi`
+    tileSources: "{{ url_base }}{{ slide }}.dzi"
 });
 
 function cargarSlide(nombre) {

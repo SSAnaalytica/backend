@@ -70,6 +70,19 @@ function asignarCaso(caseId, button) {
         }
     });
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+    const filas = document.querySelectorAll(".clickable-row");
+    filas.forEach(fila => {
+        fila.addEventListener("click", () => {
+            const slide = fila.getAttribute("data-slide");
+            const tipo = fila.getAttribute("data-tipo");
+            window.location.href = `/viewer/${slide}`;
+            
+        });
+    });
+});
+
 </script>
 
 </body>
